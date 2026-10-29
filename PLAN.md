@@ -1,5 +1,13 @@
 # SSH Island implementation plan
 
+## Fix duplicate Terminal windows
+
+1. Replace the ordinary Terminal open/reopen before permission checks with AppleScript's documented `launch` command, which skips normal startup window creation. Keep SSH text in the existing structured Apple Event.
+2. Extend the real Terminal smoke check: permission requests must create no windows; one connection must add exactly one window. Cover cold launch, running with windows, and running without windows manually.
+3. Run automated tests, build the app bundle, and run the controlled localhost smoke check; record any permission or interactive-test limitations.
+
+Completed: 16 automated tests pass; release bundle builds. Real Terminal smoke checks pass both from a stopped Terminal (0 → 1 windows) and with an existing window (1 → 2). Each also verifies three permission requests create no windows and the localhost SSH command executes. Running Terminal with all windows closed and permission denial remain manual checks.
+
 ## GitHub automation and first release
 
 1. Add CI for pushes/PRs using the macOS 27 ARM64 `xcode-27` runner; test, build, verify and upload DMG/checksum artifacts.

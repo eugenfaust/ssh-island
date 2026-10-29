@@ -49,3 +49,6 @@ Search-height regression: reproduced in both island and fallback hosting. SwiftU
 
 
 Optional menu-bar icon: the new preference defaults to visible, applies immediately and persists in UserDefaults. Runtime tests operate on the actual NSStatusItem and verify hiding with a working island, Settings recovery through the app-reopen handler, forced visibility when the overlay is unavailable, reapplying the hidden preference when the overlay returns and showing the icon again. Preference persistence assertions cover the default and saved hidden state. Settings and Quit remain accessible through the island menu and reopened Settings window.
+
+
+Duplicate Terminal window regression: replaced the normal LaunchServices open/reopen before automation permission checks with a fixed AppleScript `launch` command. SSH commands still use structured Apple Events. `./scripts/test.sh` passes all 16 tests and `./scripts/build.sh` produces the release bundle. The extended `./scripts/terminal-smoke.sh` passes from a stopped Terminal (0 → 1 windows) and a running Terminal with an existing window (1 → 2). In both cases three permission requests created no windows and the controlled localhost SSH command executed. Terminal running with all windows closed, restored sessions, and denied/revoked permission remain manual checks. No existing terminal windows were closed.

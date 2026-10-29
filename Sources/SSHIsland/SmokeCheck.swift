@@ -30,6 +30,19 @@ private actor ConfigReadFixture {
 
 /// Opt-in integration check. Uses synthetic hosts and an injected terminal; never reads SSH config or connects.
 @MainActor enum SmokeCheck {
+    /// Only used by --terminal-smoke. Do not launch Terminal just to take a baseline.
+    static func terminalWindowCount() async throws -> Int {
+        guard !NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.Terminal").isEmpty else { return 0 }
+        let count = await Task.detached {
+            guard let script = NSAppleScript(source: "tell application id \"com.apple.Terminal\" to count windows") else { return -1 }
+            var error: NSDictionary?
+            let reply = script.executeAndReturnError(&error)
+            return error == nil ? Int(reply.int32Value) : -1
+        }.value
+        guard count >= 0 else { throw TerminalFailure(message: "Could not count Terminal windows for the smoke check. Allow Terminal automation, then retry.") }
+        return count
+    }
+
     static func run(model: IslandModel, island: IslandPanelController, launcher: SmokeTerminalLauncher, statusItem: NSStatusItem, directory: URL, reopenSettings: () -> Bool) async {
         var checks: [String] = []
         func check(_ condition: Bool, _ name: String) { checks.append("\(condition ? "PASS" : "FAIL") \(name)") }

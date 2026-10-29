@@ -66,11 +66,22 @@ import Combine
                 let output = directory.appendingPathComponent("terminal-output.txt").path
                 let result: String
                 do {
+                    let before = try await SmokeCheck.terminalWindowCount()
+                    let launcher = AppleTerminalLauncher()
+                    for _ in 0..<3 { try await launcher.requestAutomationAccess() }
+                    let afterAccess = try await SmokeCheck.terminalWindowCount()
+                    guard afterAccess == before else {
+                        throw TerminalFailure(message: "Permission requests created Terminal windows (before: \(before), after: \(afterAccess)).")
+                    }
                     let command = "/usr/bin/ssh -F /dev/null -o BatchMode=yes -o ConnectTimeout=2 -o IdentityFile=none -o IdentityAgent=none -p 1 127.0.0.1 > " + TerminalCommand.shellQuote(output) + " 2>&1; /usr/bin/printf '\nSSH_ISLAND_EXECUTED\n' >> " + TerminalCommand.shellQuote(output)
-                    try await AppleTerminalLauncher().execute(command: command)
+                    try await launcher.execute(command: command)
                     try? await Task.sleep(for: .seconds(3))
+                    let after = try await SmokeCheck.terminalWindowCount()
                     let text = (try? String(contentsOfFile: output, encoding: .utf8)) ?? ""
-                    result = text.contains("SSH_ISLAND_EXECUTED") ? "PASS Terminal executed controlled localhost SSH command.\n" : "FAIL Terminal accepted event, but command completion was not observed.\n"
+                    guard after == before + 1 else {
+                        throw TerminalFailure(message: "One connection must create exactly one Terminal window (before: \(before), after: \(after)).")
+                    }
+                    result = text.contains("SSH_ISLAND_EXECUTED") ? "PASS Permission requests created no windows; one connection added exactly one window (\(before) → \(after)). Terminal executed controlled localhost SSH command.\n" : "FAIL Terminal accepted event, but command completion was not observed.\n"
                 } catch { result = "FAIL " + error.localizedDescription + "\n" }
                 try? result.write(to: directory.appendingPathComponent("result.txt"), atomically: true, encoding: .utf8)
                 NSApp.terminate(nil)
