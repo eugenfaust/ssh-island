@@ -4,6 +4,8 @@
 
 The first hosted [Build and release run](https://github.com/eugenfaust/ssh-island/actions/runs/40908636957) passed on the `xcode-27` ARM64 runner (macOS 27.0.1, Apple Swift 6.4): 16 tests with zero failures, release app build, signature/plist validation, DMG verification and SHA-256 verification. The DMG and checksum were uploaded as an Actions artifact. The artifact upload action was then updated to v7.0.2 to remove GitHub's Node.js 20 deprecation warning.
 
+The [v0.1.0 release run](https://github.com/eugenfaust/ssh-island/actions/runs/40909114456) also passed, including publishing the [release and both assets](https://github.com/eugenfaust/ssh-island/releases/tag/v0.1.0). An unauthenticated download of the published DMG/checksum passed SHA-256 verification. The download action was subsequently updated to v8.0.2 (same name/path inputs, Node.js 24 runtime) for future releases after the publishing job exposed its Node.js 20 deprecation warning. The published v0.1.0 assets remain unchanged.
+
 Local release checks also passed: `scripts/package.sh`, `codesign --verify --strict`, `hdiutil verify` and `shasum -a 256 -c`. Mounting the DMG read-only confirmed the executable is arm64, the app version is 0.1.0 and the Applications link points to `/Applications`. Workflow syntax/shell checks passed with `actionlint` (only the documented preview runner label was excluded from its outdated built-in label list). These checks do not replace interactive installation/Automation/display checks or provide Developer ID signing/notarization.
 
 ## Application validation

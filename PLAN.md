@@ -6,6 +6,8 @@
 2. Publish tagged versions through GitHub Actions with explicit ad hoc signing limitations and version/tag validation.
 3. Validate packaging locally and the workflow on GitHub, then publish `v0.1.0` and verify downloadable assets.
 
+Completed: hosted CI and the tagged release workflow passed; `v0.1.0` is public with a DMG and SHA-256 checksum. Downloaded assets were verified without authentication. Future releases use Node.js 24 artifact actions. Developer ID signing/notarization still requires Apple credentials.
+
 1. M1: Swift 6 package and reproducible arm64 macOS 27 app bundle; alias parser, safe Terminal launch, accessory lifecycle, notch overlay and menu fallback, settings/quit. Build and test.
 2. M2: recursive Includes, globbing, diagnostics, replacement-safe watching, favorites/recents/search, display and wake handling. Extend tests and rebuild.
 3. M3: keyboard navigation, reduced motion, configurable Carbon hotkey, login item, terminal adapter, icon, packaging/release documentation and smoke checks.
