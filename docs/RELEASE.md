@@ -2,6 +2,25 @@
 
 Local builds are ad hoc signed, not Developer ID signed or notarized. `scripts/package.sh` produces a local-test DMG; Gatekeeper may reject this when downloaded on another Mac.
 
+## GitHub Actions and community builds
+
+The [Build and release workflow](../.github/workflows/build.yml) runs on pushes to `main`, pull requests and manual dispatch. It executes `scripts/package.sh` (all core tests and the arm64 release build), verifies the app signature, Info.plist, DMG and SHA-256 checksum, then uploads the DMG/checksum as a 14-day Actions artifact. It does not run interactive Terminal or notch smoke tests on the hosted runner.
+
+The runner label is [`xcode-27`](https://github.blog/changelog/2026-09-10-xcode-27-runner-image-now-runs-on-macos-27/), GitHub's macOS 27 Apple Silicon preview image. This is explicit because the test executable requires macOS 27; `macos-latest` may use an older OS. Preview image availability is controlled by GitHub.
+
+A pushed `v*` tag also publishes a GitHub Release after successful packaging. The tag must exactly match `v` plus `CFBundleShortVersionString` in `Resources/Info.plist`. Update that version and increment `CFBundleVersion` for subsequent releases, commit and push, then tag the intended commit:
+
+```sh
+git tag -a v0.1.0 -m 'SSH Island 0.1.0'
+git push origin v0.1.0
+```
+
+Use a new version for every published release. The workflow uses only the repository-provided `GITHUB_TOKEN`; it needs no personal access token or Apple credentials. Build jobs have read-only repository access, and only the tag's publishing job has `contents: write`. Third-party actions are pinned to commit hashes. Release notes from [RELEASE-NOTES.md](RELEASE-NOTES.md) explain installation, requirements and the ad hoc signature; GitHub appends generated change notes. Keep that file current when changing distribution behavior.
+
+Downloads are **not notarized**. Public distribution through GitHub does not grant Apple trust. The separate Developer ID path below remains available when credentials are configured; Actions currently uses `scripts/package.sh`, not `scripts/release.sh`.
+
+## Developer ID signing and notarization
+
 For public distribution, install full Xcode (including notarytool/stapler), join the Apple Developer Program and install a Developer ID Application certificate. Set a unique bundle identifier in `Resources/Info.plist` and update version/build before release. Do not commit credentials.
 
 Store credentials interactively in the keychain:

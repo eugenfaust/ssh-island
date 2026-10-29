@@ -1,0 +1,85 @@
+name: Build and release
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref_type != 'tag' }}
+
+jobs:
+  build:
+    name: Test and package (Apple Silicon)
+    runs-on: xcode-27
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - name: Check toolchain and release version
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          REF_NAME: ${{ github.ref_name }}
+        run: |
+          sw_vers
+          swift --version
+          xcrun --show-sdk-version
+          test "$(uname -m)" = arm64
+          if [[ "$REF_TYPE" == tag ]]; then
+            version=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleShortVersionString' Resources/Info.plist)
+            test "$REF_NAME" = "v$version" || { echo 'Tag must match the app version in Resources/Info.plist'; exit 1; }
+          fi
+      - name: Test, build and create DMG
+        run: ./scripts/package.sh
+      - name: Verify app and disk image
+        run: |
+          codesign --verify --strict --verbose=2 'build/SSH Island.app'
+          plutil -lint 'build/SSH Island.app/Contents/Info.plist'
+          hdiutil verify build/SSH-Island.dmg
+          cd build
+          shasum -a 256 -c SSH-Island.dmg.sha256
+      - name: Upload disk image and checksum
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: SSH-Island-arm64
+          path: |
+            build/SSH-Island.dmg
+            build/SSH-Island.dmg.sha256
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Publish GitHub Release
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@634f93cb2916e3fdff6788551b99b062d0335ce0 # v5
+        with:
+          name: SSH-Island-arm64
+          path: build
+      - name: Publish release and assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          cd build
+          sha256sum -c SSH-Island.dmg.sha256
+          gh release create "$RELEASE_TAG" SSH-Island.dmg SSH-Island.dmg.sha256 \
+            --verify-tag --title "SSH Island $RELEASE_TAG" \
+            --notes-file ../docs/RELEASE-NOTES.md --generate-notes

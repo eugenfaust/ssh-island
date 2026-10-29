@@ -4,6 +4,8 @@ A native Swift 6 macOS utility that extends the camera notch into a small SSH la
 
 Apple Silicon, macOS 27+. No dependencies, server, telemetry, host probing or credential storage. This is an AppKit overlay, not integration with a system Dynamic Island.
 
+Download a DMG from [GitHub Releases](https://github.com/eugenfaust/ssh-island/releases/latest). Community packages are **ad hoc signed, not notarized**, so macOS may block them; see the release's installation notes. [GitHub Actions](https://github.com/eugenfaust/ssh-island/actions) tests and packages pushes/PRs and publishes version tags with a DMG and SHA-256 checksum.
+
 ## Build and run
 
 ```sh

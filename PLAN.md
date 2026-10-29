@@ -1,5 +1,11 @@
 # SSH Island implementation plan
 
+## GitHub automation and first release
+
+1. Add CI for pushes/PRs using the macOS 27 ARM64 `xcode-27` runner; test, build, verify and upload DMG/checksum artifacts.
+2. Publish tagged versions through GitHub Actions with explicit ad hoc signing limitations and version/tag validation.
+3. Validate packaging locally and the workflow on GitHub, then publish `v0.1.0` and verify downloadable assets.
+
 1. M1: Swift 6 package and reproducible arm64 macOS 27 app bundle; alias parser, safe Terminal launch, accessory lifecycle, notch overlay and menu fallback, settings/quit. Build and test.
 2. M2: recursive Includes, globbing, diagnostics, replacement-safe watching, favorites/recents/search, display and wake handling. Extend tests and rebuild.
 3. M3: keyboard navigation, reduced motion, configurable Carbon hotkey, login item, terminal adapter, icon, packaging/release documentation and smoke checks.
